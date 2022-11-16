@@ -2,15 +2,15 @@
 <html lang="en">
 
 <body>
-  <h1>Shueworld Public Web Network Election Database (PWNED)</h1>
+  <h1>MFA testbed website</h1>
 
 
   <div>Please enter your credentials below to proceed.</div><br>
   <form action="/login", method="post">
-  <label for="ssn">Social Security Number:</label><br>
-  <input type="text" id="ssn" name="ssn"><br>
+  <label for="name">Username:</label><br>
+  <input type="text" id="name" name="name"><br>
 
-  <label for="password">Secret Passphrase from Mail:</label><br>
+  <label for="password">Password:</label><br>
   <input type="text" id="password" name="password">
   <br>
   <br><input type="submit" value="Submit">

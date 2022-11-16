@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<body>
+  <h1>Homepage</h1>
+  <p>
+    Welcome, {{name}}.
+
+    This is where we'd show your friends' posts, if you had any.
+  </p>
+
+
+</body>
+</html>
+

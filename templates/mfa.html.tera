@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="refresh" content="3">
+</head>
+<body>
+  <h1>Authentication Required</h1><br>
+  <p>We're not saying we don't trust you, but we're not not saying it.
+
+    Please approve this sign in by answering the call we've sent to (***)-***-{{number}}
+  </p>
+</body>
+</html>
+
