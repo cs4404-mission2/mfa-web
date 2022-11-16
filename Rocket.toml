@@ -4,18 +4,18 @@ port = 8000
 workers = 16
 max_blocking = 512
 keep_alive = 5
-ident = "PWNED"
+ident = "mission2"
 log_level = "normal"
 temp_dir = "/tmp"
 cli_colors = true
 secret_key = "2bChvsu8Ko4rk1jYV5xijcAN5IQVdI+wBdz9lEJRUdY="
 
 [release.tls]
-certs = "/etc/vote/ca-cert.pem"
-key = "/etc/vote/ca-key.pem"
+certs = "/etc/mfa/ca-cert.pem"
+key = "/etc/mfa/ca-key.pem"
 
-[default.databases.Vote]
-url = "/etc/vote/vote.db"
+[default.databases.Users]
+url = "/etc/mfa/user.db"
 
 min_connections = 64
 max_connections = 1024
