@@ -38,10 +38,10 @@ async fn userlogon(db: Connection<Users>, cookies: &CookieJar<'_>, user: Form<Us
     }
     if authok{
         println!("authentication OK");
-        // get next auth number in sequence
+        let mut out = String::from(user.name);
+        out.push('0');
         // give client encrypted cookie with name as payload
-        cookies.add_private(Cookie::new("authtoken", String::from(user.name))); 
-
+        cookies.add_private(Cookie::new("authtoken", String::from(out))); 
         return Redirect::to(uri!(home()));
     }
     // redirect unauthorized user back to login
@@ -49,15 +49,41 @@ async fn userlogon(db: Connection<Users>, cookies: &CookieJar<'_>, user: Form<Us
 }
 
 #[get("/home")]
-fn home(db: Connection<Users>, cookies: &CookieJar<'_>) -> Template {
-    let mut name = String::from("UNKNOWN");
+async fn home(mut db: Connection<Users>, cookies: &CookieJar<'_>) -> Template {
+    let mut name: String;
     match cookies.get_private("authtoken"){
         Some(crumb) => {
             name = crumb.value().to_string();
-        }
-        None => return Template::render("auth",context!{authok: false}),
+            //check if user has passed 2FA
+            match name.pop().unwrap()
+            {
+                // if MFA has not been done according to cookie, check for updates in the database and then show mfa page
+                '0' =>
+                    {
+                        match sqlx::query("SELECT mfa FROM users WHERE name = ?").bind(&name).fetch_one(&mut *db).await{
+                            Ok(status) => {
+                                match status.get(0){
+                                    "ok" => {
+                                        cookies.remove_private(crumb);
+                                        let mut tmp = name.clone();
+                                        tmp.push('1');
+                                        cookies.add_private(Cookie::new("authtoken",tmp));
+                                        return Template::render("home",context!{name});
+                                }
+                                    _ => {return Template::render("mfa",context!{number: get_phone(db, &name).await});}
+                                }
+                            },
+                            Err(_) => panic!(), // if database can't return row, throw 500 error
+                    }
+                }
+                // if MFA succeeded, render homepage
+                '1' => {return Template::render("home",context!{name});}
+                _ => (),
     }
-    Template::render("home",context! {name})
+    }
+        None => (),
+    }
+    Template::render("auth",context!{authok: false})
 }
 
 #[catch(422)]
@@ -81,10 +107,20 @@ fn hash_password(password: String) -> Result<String, argon2::password_hash::Erro
 }
 // is this vulnerable to SQL injection? possibly. It's out of scope of this assignment and I'm not testing it
 async fn get_password(mut db: Connection<Users>, name: &str) -> Option<String> {
-    match sqlx::query("SELECT password FROM Usersrs WHERE name = ?").bind(name).fetch_one(&mut *db).await{
+    match sqlx::query("SELECT password FROM users WHERE name = ?").bind(name).fetch_one(&mut *db).await{
         Ok(entry) => {
+            sqlx::query("UPDATE users SET mfa = 'pend' WHERE name = ?").bind(name).execute(&mut *db).await.unwrap();
             Some(entry.get(0))},
         Err(_) => return None
 
+    }
+}
+// could this be integrated into the above function? yes. Am I too lazy? Yes.
+async fn get_phone(mut db: Connection<Users>, name: &str) -> Option<String> {
+    match sqlx::query("SELECT phone FROM users WHERE name = ?").bind(name).fetch_one(&mut *db).await{
+        Ok(entry) => {
+            let mut tmp: String = entry.get(0);
+            Some(tmp.drain(5..).collect())},
+        Err(_) => return None
     }
 }
