@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<body>
+  <h1>Shueworld Public Web Network Election Database (PWNED)</h1>
+  {% if authok %}
+  <h2> Authentication success!</h2>
+  {% else %}
+  <h2> Authentication failed.</h2>
+  <p> Make sure you used the correct username and password.</p>
+      {% endif %}
+
+
+
+</body>
+</html>
+
