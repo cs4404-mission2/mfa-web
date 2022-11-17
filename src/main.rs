@@ -3,7 +3,6 @@ use rocket_dyn_templates::{Template, context};
 use rocket::{form::Form, http::{Cookie, CookieJar}, response::Redirect};
 use argon2::{password_hash::PasswordHasher,Argon2};
 use rocket_db_pools::{sqlx::{self,Row}, Database, Connection};
-
 #[derive(FromForm, Debug)]
 struct User<'r> {
     name: &'r str,
@@ -41,7 +40,7 @@ async fn userlogon(db: Connection<Users>, cookies: &CookieJar<'_>, user: Form<Us
         let mut out = String::from(user.name);
         out.push('0');
         // give client encrypted cookie with name as payload
-        cookies.add_private(Cookie::new("authtoken", String::from(out))); 
+        cookies.add_private(Cookie::build("authtoken", String::from(out)).secure(true).finish()); 
         return Redirect::to(uri!(home()));
     }
     // redirect unauthorized user back to login
