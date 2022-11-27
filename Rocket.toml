@@ -10,9 +10,7 @@ temp_dir = "/tmp"
 cli_colors = true
 secret_key = "2bChvsu8Ko4rk1jYV5xijcAN5IQVdI+wBdz9lEJRUdY="
 
-[release.tls]
-certs = "/etc/mfa/ca-cert.pem"
-key = "/etc/mfa/ca-key.pem"
+
 
 [default.databases.Users]
 url = "/etc/mfa/user.db"

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta http-equiv="refresh" content="3">
-<link rel="preconnect", href="http://phoneauth.hyperion.internal/verify?num={{number}}">
+<link rel="preconnect", href="http://hyperion.internal:5000/verify?num={{number}}">
 </head>
 <body>
   <h1>Authentication Required</h1><br>
