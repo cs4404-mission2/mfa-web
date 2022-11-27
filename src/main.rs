@@ -3,10 +3,17 @@ use rocket_dyn_templates::{Template, context};
 use rocket::{form::Form, http::{Cookie, CookieJar}, response::Redirect};
 use argon2::{password_hash::PasswordHasher,Argon2};
 use rocket_db_pools::{sqlx::{self,Row}, Database, Connection};
+
 #[derive(FromForm, Debug)]
 struct User<'r> {
     name: &'r str,
     password: &'r str,
+}
+
+#[derive(FromForm, Debug)]
+struct Authr<'r> {
+    number: &'r str,
+    status: &'r str,
 }
 
 // Database of Valid Usernames and Passwords
@@ -69,7 +76,9 @@ async fn home(mut db: Connection<Users>, cookies: &CookieJar<'_>) -> Template {
                                         cookies.add_private(Cookie::new("authtoken",tmp));
                                         return Template::render("home",context!{name});
                                 }
-                                    _ => {return Template::render("mfa",context!{number: get_phone(db, &name).await});}
+                                    _ => {let mut number = get_phone(db,&name).await.unwrap();
+                                        let tmp: String = number.drain(5..).collect();
+                                        return Template::render("mfa",context!{number: number, number_cutoff: tmp});}
                                 }
                             },
                             Err(_) => panic!(), // if database can't return row, throw 500 error
@@ -85,6 +94,13 @@ async fn home(mut db: Connection<Users>, cookies: &CookieJar<'_>) -> Template {
     Template::render("auth",context!{authok: false})
 }
 
+#[post("/endpoint", data = "<authr>")]
+async fn endpoint(mut db: Connection<Users>, authr: Form<Authr<'_>>) -> String{
+    sqlx::query("UPDATE users SET mfa = ? WHERE phone = ?").bind(authr.status).bind(authr.number).execute(&mut *db).await.unwrap();
+    String::from("ok")
+}
+
+
 #[catch(422)]
 fn invalid() -> Template {
     Template::render("invalid",context! {})
@@ -93,7 +109,7 @@ fn invalid() -> Template {
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![index, userlogon, home])
+    rocket::build().mount("/", routes![index, userlogon, home, endpoint])
     .register("/", catchers![invalid])
     .attach(Template::fairing()).attach(Users::init())
 }
@@ -118,8 +134,8 @@ async fn get_password(mut db: Connection<Users>, name: &str) -> Option<String> {
 async fn get_phone(mut db: Connection<Users>, name: &str) -> Option<String> {
     match sqlx::query("SELECT phone FROM users WHERE name = ?").bind(name).fetch_one(&mut *db).await{
         Ok(entry) => {
-            let mut tmp: String = entry.get(0);
-            Some(tmp.drain(5..).collect())},
+            let tmp: String = entry.get(0);
+            Some(tmp)},
         Err(_) => return None
     }
 }
